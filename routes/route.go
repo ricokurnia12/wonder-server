@@ -13,5 +13,13 @@ func SetupRoutes(router *gin.Engine) {
 
 		api.GET("/blogposts", controllers.GetBlogPosts)
 		api.POST("/blogposts", controllers.CreateBlogPost)
+
+		api.POST("/photos", controllers.UploadPhoto)
+		api.GET("/photos", controllers.GetPhotos)
+		api.GET("/photos/:id", controllers.GetPhoto)
+		api.DELETE("/photos/:id", controllers.DeletePhoto)
+
+		// optionally: serve static files
+		api.Static("/uploads", "./uploads")
 	}
 }
