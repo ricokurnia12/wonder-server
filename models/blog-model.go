@@ -12,7 +12,7 @@ type Author struct {
 type BlogPost struct {
 	gorm.Model
 	Title          string `json:"title"`
-	Slug           string `json:"slug"`
+	Slug           string `json:"slug" gorm:"uniqueIndex"`
 	Excerpt        string `json:"excerpt"`
 	Content        string `json:"content"`
 	EnglishContent string `json:"englishcontent"`

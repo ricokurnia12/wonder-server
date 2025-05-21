@@ -17,6 +17,7 @@ const (
 type Event struct {
 	gorm.Model
 	Title          string       `json:"title"`
+	Slug           string       `json:"slug" gorm:"uniqueIndex"`
 	Description    string       `json:"description"`
 	Content        string       `json:"content"`
 	EnglishContent string       `json:"englishcontent"`
