@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -125,8 +126,41 @@ func GetEventBySlug(c *gin.Context) {
 
 func GetEvents(c *gin.Context) {
 	var events []models.Event
-	database.DB.Find(&events)
-	c.JSON(http.StatusOK, events)
+	var total int64
+
+	// Query params
+	search := c.Query("search")
+	category := c.Query("category")
+	pageStr := c.DefaultQuery("page", "1")
+	limitStr := c.DefaultQuery("limit", "10")
+
+	page, _ := strconv.Atoi(pageStr)
+	limit, _ := strconv.Atoi(limitStr)
+	offset := (page - 1) * limit
+
+	// Query building
+	query := database.DB.Model(&models.Event{})
+
+	if search != "" {
+		query = query.Where("title ILIKE ?", "%"+search+"%")
+	}
+	if category != "" {
+		query = query.Where("category = ?", category)
+	}
+
+	query.Count(&total)
+	err := query.Limit(limit).Offset(offset).Order("date asc").Find(&events).Error
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data":  events,
+		"total": total,
+		"page":  page,
+		"limit": limit,
+	})
 }
 
 func CreateEvent(c *gin.Context) {
@@ -136,5 +170,65 @@ func CreateEvent(c *gin.Context) {
 		return
 	}
 	database.DB.Create(&event)
+	c.JSON(http.StatusOK, event)
+}
+
+// GetEventByID handles GET /events/:id
+func GetEventByID(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid event ID"})
+		return
+	}
+
+	var event models.Event
+	if err := database.DB.First(&event, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Event not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, event)
+}
+
+// UpdateEvent handles PUT /events/:id
+func UpdateEvent(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid event ID"})
+		return
+	}
+
+	var event models.Event
+	if err := database.DB.First(&event, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Event not found"})
+		return
+	}
+
+	var input models.Event
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Update hanya field yang diperlukan
+	event.Title = input.Title
+	event.Slug = input.Slug
+	event.Description = input.Description
+	event.Content = input.Content
+	event.EnglishContent = input.EnglishContent
+	event.Date = input.Date
+	event.Location = input.Location
+	event.Province = input.Province
+	event.Category = input.Category
+	event.Image = input.Image
+	event.Featured = input.Featured
+
+	if err := database.DB.Save(&event).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update event"})
+		return
+	}
+
 	c.JSON(http.StatusOK, event)
 }

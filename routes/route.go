@@ -12,7 +12,9 @@ func SetupRoutes(router *gin.Engine) {
 		api.GET("/events", controllers.GetEvents)
 		api.GET("/eventsclient", controllers.GetEventsClient)
 		api.POST("/events", controllers.CreateEvent)
-		api.GET("events/:slug", controllers.GetEventBySlug)
+		api.GET("/events/:slug", controllers.GetEventBySlug)
+		api.GET("/detail-to-edit/:id", controllers.GetEventByID)
+		api.PUT("/events/:id", controllers.UpdateEvent)
 		// blog
 		api.GET("/blogposts", controllers.GetBlogPosts)
 		api.POST("/blogposts", controllers.CreateBlogPost)
