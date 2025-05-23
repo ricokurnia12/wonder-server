@@ -1,33 +1,44 @@
-name: Go Production Deploy
+name: Production Build and Deploy
 
 on:
   push:
-    branches: [master]
+    branches:
+      - master
+  workflow_dispatch:
 
 jobs:
-  build-and-run:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
+      # Build steps bisa disesuaikan (contoh buat Go):
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: 1.21
 
-      - name: Install dependencies
-        run: go mod download
-
-      - name: Build binary
+      - name: Build app
         run: go build -o app .
 
-      - name: Run server (production mode)
-        env:
-          PORT: ${{ secrets.PORT }}
-        run: |
-          chmod +x ./app
-          ./app &
-          sleep 10
-          curl http://localhost:${PORT}/ping || echo "Server did not respond"
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PROD_SERVER_HOST }}
+          username: ${{ secrets.PROD_SERVER_USERNAME }}
+          key: ${{ secrets.PROD_SERVER_SSH_PRIVATE_KEY }}
+          port: ${{ secrets.PROD_SERVER_SSH_PORT }}
+          script: |
+            cd /path/to/your/app
+
+            # Pull update dari repo via HTTPS pakai PAT token
+            git remote set-url origin https://${{ secrets.PAT_2 }}@github.com/ricokurnia12/wonder-server.git
+            git pull origin master
+
+            # Restart app (sesuaikan, contoh pakai systemd)
+            sudo systemctl restart your-app.service
+
+            # Debug
+            echo "Deploy selesai di server"
