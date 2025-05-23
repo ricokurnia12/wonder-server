@@ -9,12 +9,13 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    env:
+      DB_URL: ${{ secrets.DATABASE_URL }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Build steps bisa disesuaikan (contoh buat Go):
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
@@ -38,7 +39,7 @@ jobs:
             git pull origin master
 
             # Restart app (sesuaikan, contoh pakai systemd)
-            sudo systemctl restart your-app.service
+            sudo pm2 restart 3
 
             # Debug
             echo "Deploy selesai di server"
