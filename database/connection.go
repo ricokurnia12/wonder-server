@@ -1,6 +1,8 @@
 package database
 
 import (
+	"os"
+
 	"github.com/ricokurnia12/wonder-server/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -9,7 +11,7 @@ import (
 var DB *gorm.DB
 
 func ConnectionDb() {
-	dbUrl := "postgresql://wonderpalembang_owner:npg_Bm7vctlIQ8Wy@ep-icy-mud-a4qi9s46-pooler.us-east-1.aws.neon.tech/wonderpalembang?sslmode=require"
+	dbUrl := os.Getenv("DB_URL")
 
 	db, err := gorm.Open(postgres.Open(dbUrl))
 	if err != nil {

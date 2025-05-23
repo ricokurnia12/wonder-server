@@ -1,0 +1,15 @@
+meta {
+  name: get event client
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://localhost:8080/api/eventsclient?title=tes
+  body: none
+  auth: inherit
+}
+
+params:query {
+  title: tes
+}
