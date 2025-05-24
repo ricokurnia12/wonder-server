@@ -32,7 +32,8 @@ jobs:
           key: ${{ secrets.PROD_SERVER_SSH_PRIVATE_KEY }}
           port: ${{ secrets.PROD_SERVER_SSH_PORT }}
           script: |
-            cd /path/to/your/app
+            cd /var/www/html/wfp/wonder-server
+
 
             # Pull update dari repo via HTTPS pakai PAT token
             git remote set-url origin https://${{ secrets.PAT_2 }}@github.com/ricokurnia12/wonder-server.git

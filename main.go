@@ -38,5 +38,6 @@ func main() {
 	os.MkdirAll("uploads", os.ModePerm)
 	routes.SetupRoutes(r)
 
-	r.Run(":" + port)
+	r.Run("0.0.0.0:" + port)
+
 }
