@@ -37,6 +37,11 @@ func main() {
 
 	os.MkdirAll("uploads", os.ModePerm)
 	routes.SetupRoutes(r)
+	r.GET("/", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "Hello from golang, this is api for wonder pale!",
+		})
+	})
 
 	r.Run("0.0.0.0:" + port)
 
