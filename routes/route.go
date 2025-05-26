@@ -19,6 +19,7 @@ func SetupRoutes(router *gin.Engine) {
 		api.GET("/blogposts", controllers.GetBlogPosts)
 		api.POST("/blogposts", controllers.CreateBlogPost)
 		api.GET("/blogposts/:id", controllers.GetBlogPostById)
+		api.GET("/blogposts/slug/:slug", controllers.GetPostBySlug)
 		api.PUT("/blogposts/:id", controllers.UpdateBlogPost)
 		api.DELETE("/blogposts/:id", controllers.DeleteBlogPost)
 		// photos

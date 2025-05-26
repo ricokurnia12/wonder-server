@@ -27,7 +27,7 @@ func GetBlogPosts(c *gin.Context) {
 		query = query.Where("title ILIKE ?", "%"+search+"%")
 	}
 	if category != "" {
-		query = query.Where("category = ?", category)
+		query = query.Where("category ILIKE ?", "%"+category+"%")
 	}
 	query.Count(&total)
 	err := query.Limit(limit).Offset(offset).Order("date asc").Find(&posts).Error
@@ -57,6 +57,18 @@ func GetBlogPostById(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
 		return
 	}
+	c.JSON(http.StatusOK, post)
+}
+
+func GetPostBySlug(c *gin.Context) {
+	slug := c.Param("slug")
+
+	var post models.BlogPost
+	if err := database.DB.Where("slug = ?", slug).First(&post).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
+		return
+	}
+
 	c.JSON(http.StatusOK, post)
 }
 
