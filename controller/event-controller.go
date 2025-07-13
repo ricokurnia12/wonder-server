@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"time"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/ricokurnia12/wonder-server/database"
@@ -49,44 +49,47 @@ func GetEventsClient(c *gin.Context) {
 		query = query.Where("title LIKE ?", "%"+title+"%")
 	}
 
-	// Filter berdasarkan category
-	if category := c.Query("category"); category != "" {
-		query = query.Where("category = ?", category)
-	}
-
-	// Filter berdasarkan startDate
-	if startDateStr := c.Query("startDate"); startDateStr != "" {
-		startDate, err := time.Parse("2006-01-02", startDateStr)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid startDate format. Use YYYY-MM-DD."})
-			return
-		}
-		query = query.Where("date >= ?", startDate)
-	}
-
-	// Filter berdasarkan endDate
-	if endDateStr := c.Query("endDate"); endDateStr != "" {
-		endDate, err := time.Parse("2006-01-02", endDateStr)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid endDate format. Use YYYY-MM-DD."})
-			return
-		}
-		// Tambahkan 1 hari dikurangi 1 detik (jadi jam 23:59:59)
-		endOfDay := endDate.Add(24*time.Hour - time.Second)
-		query = query.Where("date <= ?", endOfDay)
-	}
-
 	// Hitung total hasil setelah filter
 	if err := query.Count(&total).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to count events"})
 		return
 	}
 
-	// Ambil data dengan limit dan offset
+	sortBy := strings.ToLower(strings.TrimSpace(c.DefaultQuery("sortBy", "date")))
+	sortOrder := strings.ToLower(strings.TrimSpace(c.DefaultQuery("sortOrder", "asc")))
+
+	// --- DEBUGGING START ---
+	fmt.Printf("DEBUG - Raw sortBy: '%s', Processed sortBy: '%s'\n", c.Query("sortBy"), sortBy)
+	fmt.Printf("DEBUG - Raw sortOrder: '%s', Processed sortOrder: '%s'\n", c.Query("sortOrder"), sortOrder)
+	// --- DEBUGGING END ---
+
+	// Default sorting
+	orderClause := "date ASC"
+
+	switch sortBy {
+	case "date":
+		if sortOrder == "desc" {
+			orderClause = "date DESC"
+		} else {
+			orderClause = "date ASC"
+		}
+	case "title":
+		if sortOrder == "desc" {
+			orderClause = "title DESC"
+		} else {
+			orderClause = "title ASC"
+		}
+	}
+
+	// --- CRITICAL DEBUGGING POINT ---
+	// This will show what value `orderClause` holds just before it's used by GORM.
+	fmt.Printf("DEBUG - ***Final orderClause passed to GORM: '%s'***\n", orderClause)
+	// --- END CRITICAL DEBUGGING POINT ---
+
 	if err := query.
 		Limit(limit).
 		Offset(offset).
-		Order("date ASC").
+		Order(orderClause). // This is where the orderClause is applied
 		Find(&events).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch events"})
 		return
@@ -99,6 +102,8 @@ func GetEventsClient(c *gin.Context) {
 		"page":       page,
 		"limit":      limit,
 		"totalPages": int((total + int64(limit) - 1) / int64(limit)),
+		"sortBy":     sortBy,
+		"sortOrder":  sortOrder,
 	})
 }
 func GetEventBySlug(c *gin.Context) {
